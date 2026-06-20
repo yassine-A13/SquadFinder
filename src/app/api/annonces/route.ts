@@ -1,34 +1,20 @@
 import { NextResponse } from "next/server";
 
-import type { Announcement } from "@/types";
+import { getPosts } from "@/server/actions/posts";
+import { postsFiltersSchema } from "@/lib/validators";
 
-const announcements: Announcement[] = [
-  {
-    id: "1",
-    title: "Recherche support pour tournoi Valorant",
-    location: "Casablanca",
-    level: "Intermediaire",
-    game: "Valorant",
-    slotsOpen: 2,
-  },
-  {
-    id: "2",
-    title: "Equipe FC 25 cherche milieu defensif",
-    location: "Rabat",
-    level: "Competitif",
-    game: "EA Sports FC 25",
-    slotsOpen: 1,
-  },
-  {
-    id: "3",
-    title: "Roster League of Legends en formation",
-    location: "Remote",
-    level: "Debutant",
-    game: "League of Legends",
-    slotsOpen: 3,
-  },
-];
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const parsed = postsFiltersSchema.safeParse({
+    sport: searchParams.get("sport") || undefined,
+    city: searchParams.get("city") || undefined,
+    level: searchParams.get("level") || undefined,
+    date: searchParams.get("date") || undefined,
+    type: searchParams.get("type") || undefined,
+    sort: searchParams.get("sort") || undefined,
+  });
 
-export async function GET() {
+  const announcements = await getPosts(parsed.success ? parsed.data : {});
+
   return NextResponse.json(announcements);
 }

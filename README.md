@@ -55,8 +55,8 @@ Copy-Item .env.example .env
 3. Renseigner au minimum :
 
 - `DATABASE_URL`
-- `NEXTAUTH_SECRET`
-- `NEXTAUTH_URL`
+- `AUTH_SECRET` (or `NEXTAUTH_SECRET`)
+- `AUTH_URL` (or `NEXTAUTH_URL`)
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
 
@@ -85,5 +85,5 @@ Application : `http://localhost:3000`
 - La route Auth.js est exposée via `src/app/api/auth/[...nextauth]/route.ts`.
 - Le dashboard joueur est prévu sous `/dashboard`.
 - La zone admin est prévue sous `/admin`.
-- Les annonces de démo utilisent TanStack Query avec `src/app/api/annonces/route.ts`.
+- Les annonces publiques utilisent TanStack Query avec `src/app/api/annonces/route.ts` et Prisma.
 - Les Server Actions de départ se trouvent dans `src/server/actions/`.
