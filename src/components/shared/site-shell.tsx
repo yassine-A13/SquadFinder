@@ -44,6 +44,12 @@ export async function SiteShell({
                 >
                   Dashboard
                 </Link>
+                <Link
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                  href="/profile"
+                >
+                  Profile
+                </Link>
                 {session.user.role === "ADMIN" ? (
                   <Link
                     className="text-sm text-muted-foreground hover:text-foreground"

@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMemo, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +28,9 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { addUserSport, removeUserSport, updateProfile, uploadProfileImage } from "@/server/actions/profile";
 import { profileSchema, type ProfileInput, type UserSportLevel } from "@/lib/validators";
+
+type ProfileFormValues = z.input<typeof profileSchema>;
+type ProfileFormOutput = z.output<typeof profileSchema>;
 
 type SportOption = {
   id: string;
@@ -88,7 +92,7 @@ export function ProfileSettings({ user, sports }: ProfileSettingsProps) {
   const [selectedSportLevel, setSelectedSportLevel] = useState<UserSportLevel>("BEGINNER");
   const [isPending, startTransition] = useTransition();
 
-  const form = useForm<ProfileInput>({
+  const form = useForm<ProfileFormValues, unknown, ProfileFormOutput>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       city: user.profile?.city ?? "",
@@ -106,13 +110,14 @@ export function ProfileSettings({ user, sports }: ProfileSettingsProps) {
 
   const onSubmit = form.handleSubmit((values) => {
     setMessage(null);
+    const payload: ProfileInput = values;
 
     const formData = new FormData();
-    formData.set("city", values.city);
-    formData.set("age", String(values.age));
-    formData.set("gender", values.gender);
-    formData.set("bio", values.bio ?? "");
-    formData.set("availability", values.availability ?? "");
+    formData.set("city", payload.city);
+    formData.set("age", String(payload.age));
+    formData.set("gender", payload.gender);
+    formData.set("bio", payload.bio ?? "");
+    formData.set("availability", payload.availability ?? "");
 
     startTransition(async () => {
       const result = await updateProfile(formData);
@@ -139,7 +144,7 @@ export function ProfileSettings({ user, sports }: ProfileSettingsProps) {
     setMessage(null);
     startTransition(async () => {
       const result = await addUserSport(selectedSportId, selectedSportLevel);
-      setMessage(result.message);
+      setMessage(result.message ?? null);
       setSelectedSportId("");
       setSelectedSportLevel("BEGINNER");
     });
@@ -149,7 +154,7 @@ export function ProfileSettings({ user, sports }: ProfileSettingsProps) {
     setMessage(null);
     startTransition(async () => {
       const result = await removeUserSport(sportId);
-      setMessage(result.message);
+      setMessage(result.message ?? null);
     });
   };
 
@@ -167,7 +172,7 @@ export function ProfileSettings({ user, sports }: ProfileSettingsProps) {
       const result = await uploadProfileImage(file);
       setMessage(result.message);
       if (result.imageUrl) {
-        setImagePreview(result.imageUrl);
+        setImagePreview(result.imageUrl ?? null);
       }
     });
   };
@@ -219,7 +224,12 @@ export function ProfileSettings({ user, sports }: ProfileSettingsProps) {
                   <FormItem>
                     <FormLabel>Age</FormLabel>
                     <FormControl>
-                      <Input placeholder="24" type="number" {...field} />
+                      <Input
+                        placeholder="24"
+                        type="number"
+                        value={field.value}
+                        onChange={(event) => field.onChange(Number(event.target.value))}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

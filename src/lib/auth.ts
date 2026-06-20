@@ -6,6 +6,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 
+import { authSecret, isGoogleAuthEnabled } from "@/lib/auth-env";
 import { prisma } from "@/lib/prisma";
 import { loginSchema } from "@/lib/validators";
 
@@ -51,7 +52,7 @@ const providers: NextAuthConfig["providers"] = [
   }),
 ];
 
-if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+if (isGoogleAuthEnabled) {
   providers.push(
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
@@ -63,6 +64,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 export const authConfig = {
   adapter: PrismaAdapter(prisma),
   providers,
+  secret: authSecret,
   session: {
     strategy: "jwt",
   },

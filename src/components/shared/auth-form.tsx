@@ -29,12 +29,14 @@ import {
 type AuthFormProps =
   | {
       mode: "login";
+      showGoogleSignIn: boolean;
     }
   | {
       mode: "register";
+      showGoogleSignIn: boolean;
     };
 
-export function AuthForm({ mode }: AuthFormProps) {
+export function AuthForm({ mode, showGoogleSignIn }: AuthFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
@@ -199,15 +201,17 @@ export function AuthForm({ mode }: AuthFormProps) {
           </form>
         </Form>
 
-        <Button
-          className="w-full"
-          disabled={isPending}
-          onClick={handleGoogleSignIn}
-          type="button"
-          variant="outline"
-        >
-          Continuer avec Google
-        </Button>
+        {showGoogleSignIn ? (
+          <Button
+            className="w-full"
+            disabled={isPending}
+            onClick={handleGoogleSignIn}
+            type="button"
+            variant="outline"
+          >
+            Continuer avec Google
+          </Button>
+        ) : null}
       </CardContent>
     </Card>
   );
