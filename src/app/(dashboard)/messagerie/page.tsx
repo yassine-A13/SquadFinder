@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -10,7 +10,38 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useConversation } from "@/hooks/useConversation";
 import type { ConversationItem, MessageItem } from "@/server/actions/messages";
-import { sendMessage } from "@/server/actions/messages";
+import { markAsRead, sendMessage } from "@/server/actions/messages";
+
+type NewMessageEvent = {
+  message?: {
+    conversationId?: string;
+  };
+};
+
+function ConversationSubscription({
+  conversationId,
+  active,
+  onEvent,
+}: {
+  conversationId: string;
+  active: boolean;
+  onEvent: (conversationId: string) => void;
+}) {
+  useConversation({
+    conversationId,
+    onNewMessage: (payload) => {
+      const event = payload as NewMessageEvent;
+      const eventConversationId = event.message?.conversationId ?? conversationId;
+      onEvent(eventConversationId);
+      if (active) {
+        void markAsRead(conversationId);
+      }
+    },
+    onMessageRead: () => onEvent(conversationId),
+  });
+
+  return null;
+}
 
 async function fetchConversations() {
   const response = await fetch("/api/conversations");
@@ -32,6 +63,8 @@ export default function MessageriePage() {
   const queryClient = useQueryClient();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [messageContent, setMessageContent] = useState("");
+  const [sendError, setSendError] = useState<string | null>(null);
+  const directLinkResolved = useRef(false);
 
   const conversationsQuery = useQuery({
     queryKey: ["conversations"],
@@ -44,27 +77,42 @@ export default function MessageriePage() {
     enabled: Boolean(selectedConversationId),
   });
 
-  useConversation({
-    conversationId: selectedConversationId ?? undefined,
-    onNewMessage: (payload) => {
-      queryClient.invalidateQueries({ queryKey: ["conversation-messages", selectedConversationId] });
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
-    },
-    onMessageRead: () => {
-      queryClient.invalidateQueries({ queryKey: ["conversation-messages", selectedConversationId] });
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
-    },
-  });
+  useEffect(() => {
+    if (directLinkResolved.current || !conversationsQuery.data) {
+      return;
+    }
+
+    directLinkResolved.current = true;
+    const params = new URLSearchParams(window.location.search);
+    const conversationId = params.get("conversation");
+    const applicationId = params.get("application");
+
+    if (conversationId && conversationsQuery.data.some((item) => item.id === conversationId)) {
+      setSelectedConversationId(conversationId);
+      return;
+    }
+
+    if (applicationId) {
+      void fetch(`/api/conversations/by-application?applicationId=${encodeURIComponent(applicationId)}`)
+        .then((response) => (response.ok ? response.json() : null))
+        .then((result: { conversationId?: string } | null) => {
+          if (result?.conversationId) setSelectedConversationId(result.conversationId);
+        });
+      return;
+    }
+
+    setSelectedConversationId(conversationsQuery.data[0]?.id ?? null);
+  }, [conversationsQuery.data]);
 
   useEffect(() => {
     if (!selectedConversationId) {
       return;
     }
 
-    void fetch(`/api/conversations/${selectedConversationId}/read`, {
-      method: "POST",
+    void markAsRead(selectedConversationId).then(() => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     });
-  }, [selectedConversationId]);
+  }, [queryClient, selectedConversationId]);
 
   const selectedConversation = useMemo(
     () =>
@@ -72,19 +120,37 @@ export default function MessageriePage() {
     [conversationsQuery.data, selectedConversationId],
   );
 
-  const handleSend = async () => {
+  const refreshConversation = (conversationId: string) => {
+    queryClient.invalidateQueries({ queryKey: ["conversation-messages", conversationId] });
+    queryClient.invalidateQueries({ queryKey: ["conversations"] });
+  };
+
+  const handleSend = async (event?: FormEvent) => {
+    event?.preventDefault();
     if (!selectedConversationId || !messageContent.trim()) {
       return;
     }
 
-    await sendMessage({ conversationId: selectedConversationId, content: messageContent.trim() });
+    setSendError(null);
+    const result = await sendMessage(selectedConversationId, messageContent);
+    if (!result.ok) {
+      setSendError(result.message);
+      return;
+    }
     setMessageContent("");
-    queryClient.invalidateQueries({ queryKey: ["conversation-messages", selectedConversationId] });
-    queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    refreshConversation(selectedConversationId);
   };
 
   return (
     <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
+      {conversationsQuery.data?.map((conversation) => (
+        <ConversationSubscription
+          active={conversation.id === selectedConversationId}
+          conversationId={conversation.id}
+          key={`subscription-${conversation.id}`}
+          onEvent={refreshConversation}
+        />
+      ))}
       <Card className="h-[calc(100vh-170px)] overflow-hidden">
         <CardHeader>
           <CardTitle>Conversations</CardTitle>
@@ -139,37 +205,41 @@ export default function MessageriePage() {
               </div>
               <div className="flex-1 overflow-y-auto px-4 py-4">
                 <div className="space-y-3">
-                  {messagesQuery.data?.messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`rounded-2xl p-3 ${
-                        message.sender.id === selectedConversation.interlocutor.id
-                          ? "bg-muted text-foreground"
-                          : "bg-primary text-primary-foreground self-end"
-                      } max-w-[80%]`}
-                    >
-                      <p className="text-sm">{message.content}</p>
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        {new Date(message.createdAt).toLocaleTimeString("fr-FR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
+                  {messagesQuery.data?.messages.map((message) => {
+                    const received = message.sender.id === selectedConversation.interlocutor.id;
+                    return (
+                    <div className={`flex ${received ? "justify-start" : "justify-end"}`} key={message.id}>
+                      <div
+                        className={`max-w-[80%] rounded-2xl p-3 ${
+                          received ? "bg-muted text-foreground" : "bg-primary text-primary-foreground"
+                        }`}
+                      >
+                        <p className="whitespace-pre-wrap break-words text-sm">{message.content}</p>
+                        <p className={`mt-2 text-xs ${received ? "text-muted-foreground" : "text-primary-foreground/70"}`}>
+                          {new Date(message.createdAt).toLocaleTimeString("fr-FR", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
               <div className="border-t border-border p-4">
-                <div className="flex gap-2">
+                <form className="flex gap-2" onSubmit={handleSend}>
                   <Input
+                    maxLength={4000}
                     value={messageContent}
                     onChange={(event) => setMessageContent(event.target.value)}
                     placeholder="Ecrire un message..."
                   />
-                  <Button onClick={handleSend} type="button">
+                  <Button type="submit">
                     Envoyer
                   </Button>
-                </div>
+                </form>
+                {sendError ? <p className="mt-2 text-sm text-destructive">{sendError}</p> : null}
               </div>
             </div>
           ) : (

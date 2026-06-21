@@ -62,13 +62,14 @@ export function NotificationBell() {
     }
 
     const channel = pusher.subscribe(`private-user-${session.user.id}`);
-    channel.bind("new-notification", () => {
+    const handleNotification = () => {
       queryClient.invalidateQueries({ queryKey: ["notifications", "ALL"] });
       queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
-    });
+    };
+    channel.bind("new-notification", handleNotification);
 
     return () => {
-      channel.unbind_all();
+      channel.unbind("new-notification", handleNotification);
       pusher.unsubscribe(`private-user-${session.user.id}`);
     };
   }, [queryClient, session?.user?.id]);

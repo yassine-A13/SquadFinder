@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 
 import { getMessages } from "@/server/actions/messages";
 
-export async function GET(request: Request, { params }: { params: { conversationId: string } }) {
-  const { conversationId } = params;
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ conversationId: string }> },
+) {
+  const { conversationId } = await params;
   const page = Number(new URL(request.url).searchParams.get("page") ?? "1");
   const limit = Number(new URL(request.url).searchParams.get("limit") ?? "30");
 

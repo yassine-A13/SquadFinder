@@ -5,7 +5,7 @@ import { z } from "zod";
 import type { ActionResult } from "@/types";
 import { prisma } from "@/lib/prisma";
 import { serverPusher } from "@/lib/pusher/server";
-import { getCurrentUserId } from "@/lib/auth-helpers";
+import { getCurrentUser } from "@/lib/auth-helpers";
 import { createNotification } from "@/lib/notifications";
 
 export type ConversationItem = {
@@ -39,13 +39,11 @@ export type MessageItem = {
   senderId: string;
 };
 
-const sendMessageSchema = z.object({
-  conversationId: z.string().min(1),
-  content: z.string().min(1),
-});
+const conversationIdSchema = z.string().min(1);
+const messageContentSchema = z.string().trim().min(1).max(4000);
 
 export async function getConversations(): Promise<ConversationItem[]> {
-  const userId = await getCurrentUserId();
+  const userId = (await getCurrentUser())?.id;
 
   if (!userId) {
     return [];
@@ -136,7 +134,7 @@ export async function getMessages(
   page = 1,
   limit = 30,
 ): Promise<{ messages: MessageItem[]; hasMore: boolean }> {
-  const userId = await getCurrentUserId();
+  const userId = (await getCurrentUser())?.id;
 
   if (!userId) {
     return { messages: [], hasMore: false };
@@ -199,10 +197,13 @@ export async function getMessages(
 }
 
 export async function sendMessage(
-  input: z.infer<typeof sendMessageSchema>,
+  conversationId: string,
+  content: string,
 ): Promise<ActionResult<null>> {
-  const data = sendMessageSchema.parse(input);
-  const userId = await getCurrentUserId();
+  const parsedConversationId = conversationIdSchema.safeParse(conversationId);
+  const parsedContent = messageContentSchema.safeParse(content);
+  const currentUser = await getCurrentUser();
+  const userId = currentUser?.id;
 
   if (!userId) {
     return {
@@ -211,9 +212,13 @@ export async function sendMessage(
     };
   }
 
+  if (!parsedConversationId.success || !parsedContent.success) {
+    return { ok: false, message: "Le message est invalide." };
+  }
+
   const conversation = await prisma.conversation.findUnique({
     where: {
-      id: data.conversationId,
+      id: parsedConversationId.data,
     },
     include: {
       members: true,
@@ -231,7 +236,7 @@ export async function sendMessage(
     data: {
       conversationId: conversation.id,
       senderId: userId,
-      content: data.content,
+      content: parsedContent.data,
     },
   });
 
@@ -256,6 +261,11 @@ export async function sendMessage(
       content: message.content,
       isRead: message.isRead,
       createdAt: message.createdAt.toISOString(),
+      sender: {
+        id: userId,
+        name: currentUser.name ?? "Utilisateur",
+        image: currentUser.image ?? null,
+      },
     },
   });
 
@@ -268,7 +278,7 @@ export async function sendMessage(
 export async function markAsRead(
   conversationId: string,
 ): Promise<ActionResult<{ count: number }>> {
-  const userId = await getCurrentUserId();
+  const userId = (await getCurrentUser())?.id;
 
   if (!userId) {
     return {

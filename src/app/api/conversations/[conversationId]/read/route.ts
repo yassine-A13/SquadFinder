@@ -3,10 +3,10 @@ import { NextResponse } from "next/server";
 import { markAsRead } from "@/server/actions/messages";
 
 export async function POST(
-  request: Request,
-  { params }: { params: { conversationId: string } },
+  _request: Request,
+  { params }: { params: Promise<{ conversationId: string }> },
 ) {
-  const { conversationId } = params;
+  const { conversationId } = await params;
   const result = await markAsRead(conversationId);
   return NextResponse.json(result);
 }

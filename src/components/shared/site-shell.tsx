@@ -51,6 +51,12 @@ export async function SiteShell({
                 >
                   Profile
                 </Link>
+                <Link
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                  href="/messagerie"
+                >
+                  Messagerie
+                </Link>
                 <NotificationBell />
                 {session.user.role === "ADMIN" ? (
                   <Link

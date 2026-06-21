@@ -11,9 +11,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => null);
-  const socketId = body?.socket_id ?? body?.socketId ?? new URL(request.url).searchParams.get("socket_id");
-  const channelName = body?.channel_name ?? body?.channelName ?? new URL(request.url).searchParams.get("channel_name");
+  const contentType = request.headers.get("content-type") ?? "";
+  let socketId: string | null = null;
+  let channelName: string | null = null;
+
+  if (contentType.includes("application/json")) {
+    const body = await request.json().catch(() => null);
+    socketId = body?.socket_id ?? body?.socketId ?? null;
+    channelName = body?.channel_name ?? body?.channelName ?? null;
+  } else {
+    const formData = await request.formData().catch(() => null);
+    socketId = formData?.get("socket_id")?.toString() ?? null;
+    channelName = formData?.get("channel_name")?.toString() ?? null;
+  }
 
   if (!socketId || !channelName) {
     return NextResponse.json(
