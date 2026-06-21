@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/shared/notification-bell";
 import { auth, signOut } from "@/lib/auth";
 
 type SiteShellProps = {
@@ -50,6 +51,7 @@ export async function SiteShell({
                 >
                   Profile
                 </Link>
+                <NotificationBell />
                 {session.user.role === "ADMIN" ? (
                   <Link
                     className="text-sm text-muted-foreground hover:text-foreground"
