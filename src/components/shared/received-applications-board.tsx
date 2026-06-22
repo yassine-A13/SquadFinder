@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { respondToApplication, type ApplicationListItem } from "@/server/actions/applications";
 import { AlertDialog } from "@/components/ui/alert-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import AvatarRing from "@/components/shared/avatar-ring";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -86,16 +86,11 @@ export function ReceivedApplicationsBoard({
           <CardContent className="space-y-4">
             {items.map((application) => (
               <div
-                className="flex flex-col gap-4 rounded-xl border border-border/80 p-4 md:flex-row md:items-center md:justify-between"
+                className="animate-sport-in flex flex-col gap-4 rounded-xl border border-border/80 p-4 md:flex-row md:items-center md:justify-between"
                 key={application.id}
               >
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage alt={application.candidate.name} src={application.candidate.image ?? undefined} />
-                    <AvatarFallback>
-                      {application.candidate.name.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  <AvatarRing src={application.candidate.image ?? undefined} alt={application.candidate.name} size="lg" />
                   <div className="space-y-1">
                     <p className="font-medium">{application.candidate.name}</p>
                     <p className="text-sm text-muted-foreground">

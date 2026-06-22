@@ -79,6 +79,9 @@ export default async function DashboardPage() {
           <Link href="/invitations">
             <Button variant="outline">Candidatures recues</Button>
           </Link>
+          <Link href="/favoris">
+            <Button variant="secondary">Mes favoris</Button>
+          </Link>
         </CardContent>
       </Card>
     </div>

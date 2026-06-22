@@ -5,7 +5,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import AvatarRing from "@/components/shared/avatar-ring";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -186,10 +186,7 @@ export function ProfileSettings({ user, sports }: ProfileSettingsProps) {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center gap-4">
-            <Avatar className="h-20 w-20">
-              <AvatarImage src={imagePreview ?? undefined} alt={user.name} />
-              <AvatarFallback>{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
-            </Avatar>
+            <AvatarRing src={imagePreview ?? undefined} alt={user.name} size="xl" />
             <div className="space-y-2">
               <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium">
                 <input className="hidden" type="file" accept="image/*" onChange={handleUploadImage} />

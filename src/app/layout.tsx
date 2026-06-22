@@ -1,22 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Sora } from "next/font/google";
 
 import { Providers } from "@/components/shared/providers";
+import Navbar from "@/components/shared/Navbar";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const sora = Sora({
+  variable: "--font-sora",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "SquadFinder",
-  description: "Starter Next.js 15 pour annonces, dashboard joueur et administration.",
+  title: { default: "TeamMatch", template: "%s | TeamMatch" },
+  description: "Trouve ton equipe, rassemble les bons joueurs et organise tes prochains matchs.",
 };
 
 export default function RootLayout({
@@ -26,9 +27,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${inter.variable} ${sora.variable}`}>
+        <Navbar />
         <Providers>{children}</Providers>
       </body>
     </html>

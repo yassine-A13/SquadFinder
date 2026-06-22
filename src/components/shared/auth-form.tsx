@@ -137,7 +137,7 @@ export function AuthForm({ mode, showGoogleSignIn }: AuthFormProps) {
   };
 
   return (
-    <Card className="mx-auto w-full max-w-md border-border/80 shadow-sm">
+    <Card className="mx-auto w-full max-w-md border-t-4 border-t-primary shadow-lift">
       <CardHeader>
         <CardTitle>{mode === "login" ? "Connexion" : "Creer un compte"}</CardTitle>
         <CardDescription>
@@ -195,7 +195,7 @@ export function AuthForm({ mode, showGoogleSignIn }: AuthFormProps) {
 
             {formError ? <p className="text-sm text-destructive">{formError}</p> : null}
 
-            <Button className="w-full" disabled={isPending} type="submit">
+            <Button className="w-full" disabled={isPending} type="submit" variant="premium">
               {mode === "login" ? "Se connecter" : "S'inscrire"}
             </Button>
           </form>

@@ -17,6 +17,7 @@ import type { Announcement, PostSortOption } from "@/types";
 type AnnouncementsFeedProps = {
   sports: Array<{ id: string; name: string }>;
   cities: string[];
+  initialFilters?: Partial<FiltersState>;
 };
 
 type FiltersState = {
@@ -68,8 +69,11 @@ async function fetchAnnouncements(filters: FiltersState) {
   return (await response.json()) as Announcement[];
 }
 
-export function AnnouncementsFeed({ sports, cities }: AnnouncementsFeedProps) {
-  const [filters, setFilters] = useState<FiltersState>(defaultFilters);
+export function AnnouncementsFeed({ sports, cities, initialFilters }: AnnouncementsFeedProps) {
+  const [filters, setFilters] = useState<FiltersState>({
+    ...defaultFilters,
+    ...initialFilters,
+  });
   const query = useQuery({
     queryKey: ["announcements", filters],
     queryFn: () => fetchAnnouncements(filters),
@@ -77,7 +81,7 @@ export function AnnouncementsFeed({ sports, cities }: AnnouncementsFeedProps) {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-3 rounded-2xl border border-border/80 bg-card/70 p-4 md:grid-cols-3 xl:grid-cols-6">
+      <div className="grid gap-3 rounded-2xl bg-white p-4 shadow-soft ring-1 ring-secondary-900/5 md:grid-cols-3 xl:grid-cols-6">
         <Select
           onValueChange={(value) => setFilters((current) => ({ ...current, sport: value }))}
           value={filters.sport}
@@ -178,7 +182,7 @@ export function AnnouncementsFeed({ sports, cities }: AnnouncementsFeedProps) {
         </p>
       ) : null}
       {query.data?.length ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {query.data.map((announcement) => (
             <AnnouncementCard announcement={announcement} key={announcement.id} />
           ))}
