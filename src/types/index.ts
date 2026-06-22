@@ -22,6 +22,23 @@ export type Announcement = {
   };
 };
 
+export type Review = {
+  id: string;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+  reviewer: {
+    id: string;
+    name: string;
+    image: string | null;
+  };
+};
+
+export type RatingSummary = {
+  averageRating: number;
+  reviewCount: number;
+};
+
 export type ActionResult<T = void> = {
   ok: boolean;
   message: string;

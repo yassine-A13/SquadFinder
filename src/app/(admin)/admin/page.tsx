@@ -1,35 +1,70 @@
+import Link from "next/link";
+
+import { getCityDistribution, getGlobalStats, getRegistrationsOverTime, getSportsPopularity } from "@/server/actions/admin";
+import { AdminDashboardCharts } from "@/components/shared/AdminDashboardCharts";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function AdminPage() {
+export default async function AdminHomePage() {
+  const [globalStats, sports, cities, registrations] = await Promise.all([
+    getGlobalStats(),
+    getSportsPopularity(),
+    getCityDistribution(),
+    getRegistrationsOverTime(),
+  ]);
+
   return (
-    <div className="grid gap-4 md:grid-cols-3">
-      <Card>
+    <div className="space-y-8">
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Joueurs</CardTitle>
+            <CardDescription>Utilisateurs totaux</CardDescription>
+          </CardHeader>
+          <CardContent className="text-3xl font-semibold">{globalStats.users}</CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Annonces</CardTitle>
+            <CardDescription>Annonces publiees</CardDescription>
+          </CardHeader>
+          <CardContent className="text-3xl font-semibold">{globalStats.posts}</CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Candidatures</CardTitle>
+            <CardDescription>Total des demandes</CardDescription>
+          </CardHeader>
+          <CardContent className="text-3xl font-semibold">{globalStats.applications}</CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Matchs</CardTitle>
+            <CardDescription>Matchs organisés terminés</CardDescription>
+          </CardHeader>
+          <CardContent className="text-3xl font-semibold">{globalStats.matches}</CardContent>
+        </Card>
+      </div>
+
+      <Card className="border-border/80">
         <CardHeader>
-          <CardTitle>Moderation</CardTitle>
-          <CardDescription>Validez ou refusez les annonces publiees.</CardDescription>
+          <CardTitle>Navigation rapide</CardTitle>
+          <CardDescription>Accédez aux sections d&apos;administration.</CardDescription>
         </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          Branchez ici vos actions Prisma pour gerer les contenus.
+        <CardContent className="flex flex-wrap gap-3">
+          <Link href="/admin/users">
+            <Button>Utilisateurs</Button>
+          </Link>
+          <Link href="/admin/posts">
+            <Button>Annonces</Button>
+          </Link>
+          <Link href="/admin/reports">
+            <Button variant="outline">Signalements</Button>
+          </Link>
         </CardContent>
       </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Utilisateurs</CardTitle>
-          <CardDescription>Suivi des roles et acces plateforme.</CardDescription>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          Le schema Prisma inclut deja un enum `Role` avec `PLAYER` et `ADMIN`.
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Signalements</CardTitle>
-          <CardDescription>Zone reservee a la revue des incidents.</CardDescription>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          Ajoutez vos workflows de moderation dans `src/server/actions/posts.ts`.
-        </CardContent>
-      </Card>
+
+      <AdminDashboardCharts sports={sports} cities={cities} registrations={registrations} />
     </div>
   );
 }

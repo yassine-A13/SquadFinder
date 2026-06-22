@@ -1,7 +1,18 @@
 import { AnnouncementsFeed } from "@/components/shared/announcements-feed";
 import { prisma } from "@/lib/prisma";
 
-export default async function AnnouncementsPage() {
+type AnnouncementsPageProps = {
+  searchParams?: {
+    sport?: string;
+    city?: string;
+    level?: string;
+    date?: string;
+    type?: string;
+    sort?: "recent" | "matchDate" | "popular";
+  };
+};
+
+export default async function AnnouncementsPage({ searchParams }: AnnouncementsPageProps) {
   const [sports, cities] = await Promise.all([
     prisma.sport.findMany({
       orderBy: { name: "asc" },
@@ -26,6 +37,14 @@ export default async function AnnouncementsPage() {
       <AnnouncementsFeed
         cities={cities.map((item) => item.city)}
         sports={sports}
+        initialFilters={{
+          sport: searchParams?.sport ?? "all",
+          city: searchParams?.city ?? "all",
+          level: searchParams?.level ?? "all",
+          date: searchParams?.date ?? "",
+          type: searchParams?.type ?? "all",
+          sort: searchParams?.sort ?? "recent",
+        }}
       />
     </section>
   );
