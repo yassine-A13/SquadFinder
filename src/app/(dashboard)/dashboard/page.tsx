@@ -1,86 +1,70 @@
-import Link from "next/link";
+﻿import Link from "next/link";
+import { Activity, Bell, Calendar, FileText, MessageSquare, Target } from "lucide-react";
 
-import { getMyPosts } from "@/server/actions/posts";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { auth } from "@/lib/auth";
- 
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getCurrentUser } from "@/lib/auth-helpers";
+import { getDashboardStats, getUpcomingMatches } from "@/server/actions/dashboard";
+import { getNotifications } from "@/server/actions/notifications";
+
 export default async function DashboardPage() {
-  const session = await auth();
-  const myPosts = await getMyPosts();
+  const user = await getCurrentUser();
+  const stats = await getDashboardStats();
+  const upcomingMatches = await getUpcomingMatches();
+  const { notifications } = await getNotifications(1, 5, "ALL");
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
-      <Card>
-        <CardHeader>
-          <CardTitle>Profil</CardTitle>
-          <CardDescription>Donnees lues depuis la session Auth.js.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-1 text-sm text-muted-foreground">
-          <p>Nom: {session?.user?.name ?? "A renseigner"}</p>
-          <p>E-mail: {session?.user?.email ?? "A renseigner"}</p>
-          <p>Role: {session?.user?.role ?? "PLAYER"}</p>
-          <div className="pt-3">
-            <Link href="/profile">
-              <Button size="sm" variant="outline">Gerer mon profile</Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+    <section className="space-y-6">
+      <div className="space-y-2">
+        <h2 className="text-3xl font-semibold tracking-tight">Bienvenue, {user?.name ?? "Joueur"} !</h2>
+        <p className="text-muted-foreground">Vue d&apos;ensemble de votre activité sur TeamMatch</p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
-          <CardHeader>
-            <CardTitle>Mes annonces</CardTitle>
-            <CardDescription>
-              Nombre d&apos;annonces publiees depuis votre compte.
-            </CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Annonces actives</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="text-3xl font-semibold">{myPosts.length}</CardContent>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.activePosts}</div>
+            <p className="text-xs text-muted-foreground">Annonces ouvertes actuellement</p>
+          </CardContent>
         </Card>
+
         <Card>
-          <CardHeader>
-            <CardTitle>Annonces ouvertes</CardTitle>
-            <CardDescription>Vos annonces actuellement visibles publiquement.</CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Candidatures en attente</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="text-3xl font-semibold">
-            {myPosts.filter((post) => post.status === "OPEN").length}
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.pendingApplications}</div>
+            <p className="text-xs text-muted-foreground">Candidatures à traiter</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Invitations à traiter</CardTitle>
+            <Bell className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.invitations}</div>
+            <p className="text-xs text-muted-foreground">Réponses à donner</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Messages non lus</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.unreadMessages}</div>
+            <p className="text-xs text-muted-foreground">Nouveaux messages</p>
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Gestion des annonces</CardTitle>
-          <CardDescription>
-            Creez, modifiez et suivez vos annonces depuis les pages dediees.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-3">
-          <Link href="/creer-annonce">
-            <Button>Creer une annonce</Button>
-          </Link>
-          <Link href="/mes-annonces">
-            <Button variant="outline">Voir mes annonces</Button>
-          </Link>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Gestion des candidatures</CardTitle>
-          <CardDescription>
-            Suivez vos candidatures envoyees et repondez a celles recues sur vos annonces.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-3">
-          <Link href="/mes-candidatures">
-            <Button variant="outline">Mes candidatures</Button>
-          </Link>
-          <Link href="/invitations">
-            <Button variant="outline">Candidatures recues</Button>
-          </Link>
-        </CardContent>
-      </Card>
-    </div>
+    </section>
   );
 }

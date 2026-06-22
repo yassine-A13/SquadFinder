@@ -150,6 +150,13 @@ export function ReceivedApplicationsBoard({
                       </Button>
                     </>
                   ) : null}
+                  {application.status === "ACCEPTED" ? (
+                    <a href={`/messagerie?application=${application.id}`}>
+                      <Button size="sm" variant="outline" type="button">
+                        Voir la conversation
+                      </Button>
+                    </a>
+                  ) : null}
                 </div>
               </div>
             ))}

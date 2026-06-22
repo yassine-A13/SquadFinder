@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ApplicationListItem } from "@/server/actions/applications";
 
@@ -31,9 +33,19 @@ export function MyApplicationsList({ applications }: { applications: Application
           </CardHeader>
           <CardContent className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
             <span>Candidature envoyee le {new Date(application.createdAt).toLocaleDateString("fr-FR")}</span>
-            <Link className="font-medium text-foreground underline-offset-4 hover:underline" href={`/annonces/${application.post.id}`}>
-              Voir l&apos;annonce
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link className="font-medium text-foreground underline-offset-4 hover:underline" href={`/annonces/${application.post.id}`}>
+                Voir l&apos;annonce
+              </Link>
+              {application.status === "ACCEPTED" ? (
+                <Link
+                  className={cn(buttonVariants({ size: "sm", variant: "outline" }))}
+                  href={`/messagerie?application=${application.id}`}
+                >
+                  Voir la conversation
+                </Link>
+              ) : null}
+            </div>
           </CardContent>
         </Card>
       ))}
